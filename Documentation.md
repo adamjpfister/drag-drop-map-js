@@ -13,8 +13,8 @@
 	- png, jpg, etc.
 	
 ###Constructor Options
-|Name| Type| Drop Config | Default Value | Example | Notes|
-|--------|
+|Name|Type|Drop Config|Default Value|Example|Notes|
+|----|----|-----------|-------------|-------|-----|
 |pointSymbol| SimpleMarkerSymbol __or__ PictureMarkerSymbol | csv, agsRestQuery | SimpleMarkerSymbol| | Symbol to use for csv locations or REST query results. If omitted, a plain SimpleMarkerSymbol is used.|
 |polygonSymbol| SimpleFillSymbol __or__ PictureFillSymbol | agsRestQuery | SimpleFillSymbol| | Symbol to use for REST query results. If omitted, a plain SimpleFillSymbol is used.|
 |lineSymbol| SimpleLineSymbol __or__ CartographicLineSymbol | agsRestQuery | SimpleLineSymbol| | Symbol to use for REST query results. If omitted, a plain SimpleLineSymbol is used.|
@@ -30,36 +30,36 @@
 ####drop-process-complete
 Returns an Object with the following properties
 
-|Name | Type | Notes|
-|--------------------|
+|Name|Type|Notes|
+|----|----|-----|
 |dropType |String|Possible values are: "csv" , "image" , "mapService" , "featureService" , "imageService" , "agsRestQuery"|
 |messages| String[]| Array of messages providing any supplemental info if available
 
 ######for csv:
-|Name| Type| Notes|
-|--------|
+|Name|Type|Notes|
+|----|----|-----|
 |graphics| Graphic[]| Array of Graphics representing CSV rows|
 |graphicsExtent (if __true__ in options)| Extent| Geometry object representing the entire extent of all CSV records|
 
 ######for feature, map & image service:
-|Name| Type| Notes|
-|--------|
+|Name|Type|Notes|
+|----|----|-----|
 |layer| Layer | Layer object of type that was dropped via URL|
 
 ######for agsRestQuery:
-|Name| Type|Notes|
-|----------------|
+|Name|Type|Notes|
+|----|----|-----|
 |graphics| Graphic[] | Array of Graphics representing the query results |
 |graphicsExtent (if __true__ in options) | Extent | Geometry object representing the entire extent of the query results|
 
 ######for image:
-|Name| Type| Notes|
-|--------|
+|Name|Type|Notes|
+|----|----|-----|
 |graphic| Graphic| Graphic object with a PictureMarkerSymbol of the image dropped|
 
 ####drop-process-error
 |Name|Type|Notes|
-|----------------|
+|----|----|-----|
 |error| String| Message describing error|
 
 
