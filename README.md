@@ -1,4 +1,1 @@
-drag-drop-map-js
-================
-
-drag and drop is awesome.
+a helper class to allow drag and drop functionality for an Esri Map control

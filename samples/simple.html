@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no"/>
+    <title>Simple Map</title>
+    <link rel="stylesheet" href="http://js.arcgis.com/3.7/js/esri/css/esri.css">
+    <style>
+      html, body, #map {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background-color: #FFF;
+        overflow: hidden;
+        font-family: "Trebuchet MS";
+      }
+    </style>
+    <script type="text/javascript">
+    var package_path = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
+    var dojoConfig = {
+        // The locationPath logic below may look confusing but all its doing is 
+        // enabling us to load the api from a CDN and load local modules from the correct location.
+        packages: [{
+            name: "utilities",
+            location: "/drag-drop-map-js/src"
+        }]
+    };
+</script>
+    <script src="http://js.arcgis.com/3.7/"></script>
+    <script>
+      var map;
+
+      require(["esri/map", "esri/symbols/SimpleMarkerSymbol", "utilities/dragdropmap", "dojo/_base/array", "dojo/_base/Color", "dojo/domReady!"], 
+      function(Map, SimpleMarkerSymbol, DragDropMap, array, Color) {
+        esri.config.defaults.io.proxyUrl = 'http://localhost/proxy.php';
+        map = new Map("map", {
+          basemap: "gray",
+          center: [-97.46708984375452, 38.52767033266623], 
+          zoom: 4,
+          sliderStyle: "small"
+        });
+
+        var ddm = new DragDropMap({
+          map: map,
+          csv: {
+            pointSymbol: new SimpleMarkerSymbol().setColor(new Color('red')).setSize(8),
+            returnGraphicsExtent: true,
+            xyFields: ['EXCEL_POINT_X', 'EXCEL_POINT_Y']
+          },
+          image: {
+            maxImageSize: [32,32]  
+          },
+          featureService: {
+            allOutFields: false
+          },
+          agsRestQuery: {
+            returnGraphicsExtent: true
+          }
+        });
+
+        //listen for the drop process complete event and then dominate when it's ready
+        ddm.on('drop-process-complete', 
+          function (result) {
+            var dropType = result.dropType;
+            if (dropType === 'csv' || dropType === 'agsRestQuery') {
+              array.forEach(result.graphics,
+                function(graphic) {
+                  //add graphic to map .. or not. it's your world.
+                  map.graphics.add(graphic);
+                  if (result.graphicsExtent)
+                    map.setExtent(result.graphicsExtent, true);
+                }
+              );
+            } else if (dropType === 'image') {
+              map.graphics.add(result.graphic);
+            } else {
+              //either a map, feature or image layer is the result
+              map.addLayer(result.layer);
+            } 
+          }
+        );
+
+        ddm.on('drop-process-error', function (error) {
+          console.log(error);
+        })
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="map"></div>
+  </body>
+</html>
