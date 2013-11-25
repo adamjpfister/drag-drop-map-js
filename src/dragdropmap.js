@@ -9,6 +9,7 @@ define(
 		'dojo/dom-style',
 		'dojo/dom-construct',
 		'dojo/string',
+		'dojo/io-query',
 
 		'dojox/data/CsvStore', 
 		'dojox/encoding/base64',
@@ -20,6 +21,7 @@ define(
 		'esri/SpatialReference',
 
 		'esri/geometry/webMercatorUtils',
+		'esri/geometry/jsonUtils',
 		'esri/geometry/Point',
 		'esri/geometry/ScreenPoint',
 
@@ -30,16 +32,18 @@ define(
 
 		'esri/symbols/PictureMarkerSymbol',
 		'esri/symbols/SimpleMarkerSymbol',
+		'esri/symbols/SimpleLineSymbol',
+		'esri/symbols/SimpleFillSymbol',
 
 		'utilities/CsvCommonKeys'
 	],
 	function(
-		declare, Evented, lang, array, on, dom, domStyle, domConstruct, string,
+		declare, Evented, lang, array, on, dom, domStyle, domConstruct, string, ioQuery,
 		CsvStore, base64,
 		esriRequest, urlUtils, graphicsUtils, Graphic, SpatialReference,
-		webMercatorUtils, Point, ScreenPoint,
+		webMercatorUtils, jsonUtils, Point, ScreenPoint,
 		GraphicsLayer, FeatureLayer, ArcGISDynamicMapServiceLayer, ArcGISImageServiceLayer, 
-		PictureMarkerSymbol, SimpleMarkerSymbol,
+		PictureMarkerSymbol, SimpleMarkerSymbol, SimpleLineSymbol, SimpleFillSymbol,
 		CsvCommonKeys) {
 		
 		var dragDropMap = declare('utilities.dragdropmap', [Evented], {
@@ -47,16 +51,6 @@ define(
 			_map: null,
 
 			_csvCommonKeys: null,
-
-			csv: {
-				pointSymbol: new SimpleMarkerSymbol().setColor('red').setSize(8),
-				returnGraphicsExtent: false
-			},
-
-			mapService: {
-				promptForVisibleLayers: true,
-				opacity: 1
-			},
 
 			_wm: new SpatialReference(102100),
 			
@@ -70,7 +64,45 @@ define(
 				}
 				me._map = options.map;
 
-				me = lang.mixin(me, options);
+				//csv
+				me.csv = {
+					pointSymbol: new SimpleMarkerSymbol().setColor('red').setSize(8),
+					returnGraphicsExtent: false
+				};
+				lang.mixin(me.csv, options.csv);
+
+				//image
+				if (options.image)
+					me.image = options.image;
+
+				//mapService
+				me.mapService = {
+					promptForVisibleLayers: true,
+					opacity: 1
+				};
+				lang.mixin(me.mapService, options.mapService);
+
+				//featureService
+				me.featureService = {
+					allOutFields: true,
+					opacity: 1
+				};
+				lang.mixin(me.featureService, options.featureService);
+
+				//imageService
+				me.imageService = {
+					opacity: 1
+				};
+				lang.mixin(me.imageService, options.imageService);
+
+				//agsRestQuery
+				me.agsRestQuery = {
+					pointSymbol: new SimpleMarkerSymbol().setColor('red').setSize(8),
+					lineSymbol: new SimpleLineSymbol().setColor('blue').setWidth(3),
+					polygonSymbol: new SimpleFillSymbol().setColor('green'),
+					returnGraphicsExtent: false
+				};
+			 	lang.mixin(me.agsRestQuery, options.agsRestQuery);
 
 				me._csvCommonKeys = new CsvCommonKeys();
 				
@@ -234,21 +266,42 @@ define(
 			},
 
 			_handleServiceQuery: function (url) {
-				var me = this;
+				var me = this,
+					urlObj,
+					wkid = me._map.spatialReference.wkid;
+
+				urlObj = urlUtils.urlToObject(url);
+				if (urlObj.query.f !== 'json') 
+					urlObj.query.f = 'json';
+
+				if (urlObj.query.outSR !== wkid)
+					urlObj.query.outSR = wkid;
+
+				url = urlObj.path + '?' + ioQuery.objectToQuery(urlObj.query);
 
 				esriRequest({
 					url: url
 				}).then(
 					function (response) {
-						var returnObj = { dropType: 'agsRestQuery' };
+						var returnObj = { dropType: 'agsRestQuery' },
+							graphics = [],
+							symbol;
+
 						if (response.features.length == 0)
 							returnObj['messages'] = ['no features returned from query', url];
 
-						var graphics = [];
+						if (response.geometryType === 'esriGeometryPoint') {
+							symbol = me.agsRestQuery.pointSymbol;
+						} else if (response.geometryType === 'esriGeometryPolygon') {
+							symbol = me.agsRestQuery.polygonSymbol;
+						} else {
+							symbol = me.agsRestQuery.lineSymbol;
+						}
+
 						array.forEach(response.features, function(feature) {
 							graphics.push(new Graphic(
-								new Point(feature.geometry.x, feature.geometry.y, me._wm),
-								new SimpleMarkerSymbol().setColor('red').setSize(8)
+								jsonUtils.fromJson(feature.geometry).setSpatialReference(me._wm),
+								symbol
 							));
 						});
 
@@ -382,9 +435,9 @@ define(
 						geometry = new Point(longitude, latitude, me._gcs);
 					}
 
-					symbol = (me.csv && me.csv.pointSymbol) ? me.csv.pointSymbol : new SimpleMarkerSymbol();
+					//symbol = (me.csv && me.csv.pointSymbol) ? me.csv.pointSymbol : new SimpleMarkerSymbol();
 
-					graphics.push(new Graphic(geometry, symbol, attributes, null));
+					graphics.push(new Graphic(geometry, me.csv.pointSymbol, attributes, null));
 				});
 	
 				var returnObj = { dropType: 'csv', graphics: graphics };

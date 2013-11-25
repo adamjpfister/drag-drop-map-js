@@ -51,12 +51,13 @@
             xyFields: ['EXCEL_POINT_X', 'EXCEL_POINT_Y']
           },
           image: {
-            maxImageSize: [32,32]  
+            maxSize: [32,32]  
           },
           featureService: {
             allOutFields: false
           },
           agsRestQuery: {
+            pointSymbol: new SimpleMarkerSymbol().setColor('green').setSize(8),
             returnGraphicsExtent: true
           }
         });
@@ -85,7 +86,8 @@
 
         ddm.on('drop-process-error', function (error) {
           console.log(error);
-        })
+        });
+
       });
     </script>
   </head>
