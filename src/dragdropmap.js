@@ -102,7 +102,7 @@ define(
 					polygonSymbol: new SimpleFillSymbol().setColor('green'),
 					returnGraphicsExtent: false
 				};
-			 	lang.mixin(me.agsRestQuery, options.agsRestQuery);
+				lang.mixin(me.agsRestQuery, options.agsRestQuery);
 
 				me._csvCommonKeys = new CsvCommonKeys();
 				
@@ -300,7 +300,7 @@ define(
 
 						array.forEach(response.features, function(feature) {
 							graphics.push(new Graphic(
-								jsonUtils.fromJson(feature.geometry).setSpatialReference(me._wm),
+								jsonUtils.fromJson(feature.geometry).setSpatialReference(me._map.spatialReference),
 								symbol
 							));
 						});
